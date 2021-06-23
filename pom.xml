@@ -33,6 +33,7 @@
 	</dependencyManagement>
 
 	<dependencies>
+        <!--
 		<dependency>
 			<groupId>com.plooh.adssi</groupId>
 			<artifactId>dial-datamodel-java</artifactId>
@@ -45,7 +46,7 @@
 			<version>${project.version}</version>
             <systemPath>../dial-keystore-java</systemPath>
 		</dependency>
-
+        -->
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-web</artifactId>

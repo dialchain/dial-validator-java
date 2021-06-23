@@ -2,3 +2,5 @@ server:
   error:
     include-message: always
   port: 9091
+validator:
+  dns: 
