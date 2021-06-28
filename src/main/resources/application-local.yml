@@ -6,6 +6,6 @@ validator:
   dns:
 
 ipfs:
-  host:
-  port:
+  host: localhost
+  port: 5001
   multiaddr:
