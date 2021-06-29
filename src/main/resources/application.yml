@@ -2,10 +2,17 @@ server:
   error:
     include-message: always
   port: 9091
+
+spring:
+  http:
+    multipart:
+      max-file-size: 128kb
+      max-request-size: 128kb
+
 validator:
   dns:
 
 ipfs:
-  host:
-  port:
-  multiaddr:
+  host: ~
+  port: ~
+  multiaddr: ~

@@ -26,7 +26,9 @@ import org.mockito.MockitoAnnotations;
 @Slf4j
 public class IpfsApiTest {
 
-    public static final String CONTENT_HELLO_WORLD = "Hello World!";
+    public static final String HELLO_WORLD_HASH = "QmfM2r8seH2GiRaC4esTjeraXEachRt8ZsSeGaWTPLyMoG";
+    public static final String HELLO_WORLD_CONTENT = "Hello World!";
+    public static final String HELLO_WORLD_FILENAME = "hello-world.txt";
 
     @Mock
     private IPFS ipfs;
@@ -45,75 +47,79 @@ public class IpfsApiTest {
     }
 
     @Test
-    void shouldAddFile() throws IOException {
-        var hash = "QmfM2r8seH2GiRaC4esTjeraXEachRt8ZsSeGaWTPLyMoG";
-        when(ipfs.add(any(NamedStreamable.class))).thenReturn(List.of(new MerkleNode(hash, Optional.of("hello-world.txt"))));
+    void shouldAddFileAsBytes() throws IOException {
+        when(ipfs.add(any(NamedStreamable.class))).thenReturn(List.of(new MerkleNode(HELLO_WORLD_HASH, Optional.of(HELLO_WORLD_FILENAME))));
 
-        var actual = uut.addFile(CONTENT_HELLO_WORLD);
+        var actual = uut.addFile(HELLO_WORLD_CONTENT.getBytes(StandardCharsets.UTF_8), HELLO_WORLD_FILENAME);
 
-        assertThat(actual).isEqualTo(hash);
+        assertThat(actual).isEqualTo(HELLO_WORLD_HASH);
+        verify(ipfs, times(1)).add(any(NamedStreamable.class));
+    }
+
+    @Test
+    void shouldAddFileAsString() throws IOException {
+        when(ipfs.add(any(NamedStreamable.class))).thenReturn(List.of(new MerkleNode(HELLO_WORLD_HASH, Optional.of(HELLO_WORLD_FILENAME))));
+
+        var actual = uut.addFile(HELLO_WORLD_CONTENT, HELLO_WORLD_FILENAME);
+
+        assertThat(actual).isEqualTo(HELLO_WORLD_HASH);
         verify(ipfs, times(1)).add(any(NamedStreamable.class));
     }
 
     @Test
     void shouldGetFileByHash() throws IOException {
-        var hash = "QmfM2r8seH2GiRaC4esTjeraXEachRt8ZsSeGaWTPLyMoG"; // Hash of a file
-        when(ipfs.cat(any(Multihash.class))).thenReturn(CONTENT_HELLO_WORLD.getBytes(StandardCharsets.UTF_8));
+        when(ipfs.cat(any(Multihash.class))).thenReturn(HELLO_WORLD_CONTENT.getBytes(StandardCharsets.UTF_8));
 
-        var actual = uut.getFileByHash(hash);
+        var actual = uut.getFileByHash(HELLO_WORLD_HASH);
 
-        assertThat(new String(actual, Charset.forName("UTF-8"))).isEqualTo(CONTENT_HELLO_WORLD);
+        assertThat(new String(actual, Charset.forName("UTF-8"))).isEqualTo(HELLO_WORLD_CONTENT);
         verify(ipfs, times(1)).cat(any(Multihash.class));
     }
 
     @Test
     void shouldGetFileInfoByHash() throws IOException {
-        var input = "QmfM2r8seH2GiRaC4esTjeraXEachRt8ZsSeGaWTPLyMoG"; // Hash of a file
-        when(ipfs.ls(any(Multihash.class))).thenReturn(List.of(new MerkleNode(input, Optional.of("hello-world.txt"))));
+        when(ipfs.ls(any(Multihash.class))).thenReturn(List.of(new MerkleNode(HELLO_WORLD_HASH, Optional.of(HELLO_WORLD_FILENAME))));
 
-        var actual = uut.getFileInfoByHash(input);
+        var actual = uut.getFileInfoByHash(HELLO_WORLD_HASH);
 
         assertThat(actual).isNotEmpty();
-        assertThat(actual.get(0).hash.toBase58()).isEqualTo(input);
+        assertThat(actual.get(0).hash.toBase58()).isEqualTo(HELLO_WORLD_HASH);
         verify(ipfs, times(1)).ls(any(Multihash.class));
     }
 
     @Test
     void shouldPinFileByHash() throws IOException {
-        var hash = "QmfM2r8seH2GiRaC4esTjeraXEachRt8ZsSeGaWTPLyMoG"; // Hash of a file
-        var expected = List.of(Multihash.fromBase58(hash));
+        var expected = List.of(Multihash.fromBase58(HELLO_WORLD_HASH));
         when(ipfs.pin.add(any(Multihash.class))).thenReturn(expected);
 
-        var actual = uut.pinFileByHash(hash);
+        var actual = uut.pinFileByHash(HELLO_WORLD_HASH);
 
         assertThat(actual).isNotEmpty();
-        assertThat(actual).isEqualTo(expected);
+        assertThat(actual).isEqualTo(List.of(HELLO_WORLD_HASH));
         verify(ipfs.pin, times(1)).add(any(Multihash.class));
     }
 
     @Test
     void shouldUnpinFileByHash() throws IOException {
-        var hash = "QmfM2r8seH2GiRaC4esTjeraXEachRt8ZsSeGaWTPLyMoG"; // Hash of a file
-        var expected = List.of(Multihash.fromBase58(hash));
+        var expected = List.of(Multihash.fromBase58(HELLO_WORLD_HASH));
         when(ipfs.pin.rm(any(Multihash.class))).thenReturn(expected);
 
-        var actual = uut.unpinFileByHash(hash);
+        var actual = uut.unpinFileByHash(HELLO_WORLD_HASH);
 
         assertThat(actual).isNotEmpty();
-        assertThat(actual).isEqualTo(expected);
+        assertThat(actual).isEqualTo(List.of(HELLO_WORLD_HASH));
         verify(ipfs.pin, times(1)).rm(any(Multihash.class));
     }
 
     @Test
     void shouldListAllFiles() throws IOException {
-        var hash = "QmfM2r8seH2GiRaC4esTjeraXEachRt8ZsSeGaWTPLyMoG"; // Hash of a file
-        var expected = Map.of(Multihash.fromBase58(hash), (Object)IPFS.PinType.all);
+        var expected = Map.of(Multihash.fromBase58(HELLO_WORLD_HASH), (Object)IPFS.PinType.all);
         when(ipfs.pin.ls(IPFS.PinType.all)).thenReturn(expected);
 
         var actual = uut.listAllFiles();
 
         assertThat(actual).isNotEmpty();
-        assertThat(actual).isEqualTo(expected);
+        assertThat(actual).isEqualTo(List.of(HELLO_WORLD_HASH));
         verify(ipfs.pin, times(1)).ls(IPFS.PinType.all);
     }
 

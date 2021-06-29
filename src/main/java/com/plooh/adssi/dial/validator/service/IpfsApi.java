@@ -8,6 +8,7 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -20,15 +21,28 @@ public class IpfsApi {
     private final IPFS ipfs;
 
     /**
+     *  Get the IPFS Name
+     *
+     * @return
+     */
+    public String getIpfsName(){
+        return ipfs.host;
+    }
+
+    /**
      * Add a file on the IPFS network by uploading it to the connected IPFS
      * node and stored in its local datastore.
      *
      * @param content
      * @return unique identifier of the file called "multihash"
      */
-    public String addFile(String content){
+    public String addFile(String content, String fileName){
+        return addFile(content.getBytes(StandardCharsets.UTF_8), fileName);
+    }
+
+    public String addFile(byte[] content, String fileName){
         try {
-            NamedStreamable file = new NamedStreamable.ByteArrayWrapper(content.getBytes(StandardCharsets.UTF_8));
+            NamedStreamable file = new NamedStreamable.ByteArrayWrapper(fileName, content);
             MerkleNode response = ipfs.add(file).get(0);
             String hash = response.hash.toBase58();
             log.info("Filename: {}, Hash (base 58): {}", response.name.orElse("unknown"), hash);
@@ -46,8 +60,7 @@ public class IpfsApi {
      */
     public byte[] getFileByHash(String hash){
         try {
-            byte[] content = ipfs.cat(Multihash.fromBase58(hash));
-            return content;
+            return ipfs.cat(Multihash.fromBase58(hash));
         } catch (IOException e) {
             throw new RuntimeException("Error while getting file from the IPFS node", e);
         }
@@ -61,8 +74,7 @@ public class IpfsApi {
      */
     public List<MerkleNode> getFileInfoByHash(String hash) {
         try {
-            List<MerkleNode> list = ipfs.ls(Multihash.fromBase58(hash));
-            return list;
+            return ipfs.ls(Multihash.fromBase58(hash));
         } catch (IOException e) {
             throw new RuntimeException("Error while getting info from the IPFS node", e);
         }
@@ -76,10 +88,10 @@ public class IpfsApi {
      * @param hash
      * @return list of the unique identifiers of the pinned files
      */
-    public List<Multihash> pinFileByHash(String hash) {
+    public List<String> pinFileByHash(String hash) {
         try {
             List<Multihash> list = ipfs.pin.add(Multihash.fromBase58(hash));
-            return list;
+            return list.stream().map(multihash -> multihash.toBase58()).collect(Collectors.toList());
         } catch (IOException e) {
             throw new RuntimeException("Error while pining to the IPFS node", e);
         }
@@ -91,12 +103,12 @@ public class IpfsApi {
      * @param hash
      * @return list of the unique identifiers of the removed files
      */
-    public List<Multihash> unpinFileByHash(String hash) {
+    public List<String> unpinFileByHash(String hash) {
         try {
             List<Multihash> list = ipfs.pin.rm(Multihash.fromBase58(hash));
-            return list;
+            return list.stream().map(multihash -> multihash.toBase58()).collect(Collectors.toList());
         } catch (IOException e) {
-            throw new RuntimeException("Error while pining to the IPFS node", e);
+            throw new RuntimeException("Error while unpining to the IPFS node", e);
         }
     }
 
@@ -105,12 +117,12 @@ public class IpfsApi {
      *
      * @return list of all content
      */
-    public Map<Multihash, Object> listAllFiles() {
+    public List<String> listAllFiles() {
         try {
-            Map<Multihash, Object> list = ipfs.pin.ls(IPFS.PinType.all);
-            return list;
+            Map<Multihash, Object> map = ipfs.pin.ls(IPFS.PinType.all);
+            return map.keySet().stream().map(multihash -> multihash.toBase58()).collect(Collectors.toList());
         } catch (IOException e) {
-            throw new RuntimeException("Error while pining to the IPFS node", e);
+            throw new RuntimeException("Error while getting files from the IPFS node", e);
         }
     }
 
