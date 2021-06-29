@@ -15,7 +15,7 @@ import org.springframework.stereotype.Service;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class IpfsService {
+public class IpfsApi {
 
     private final IPFS ipfs;
 

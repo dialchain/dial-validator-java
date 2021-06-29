@@ -9,7 +9,7 @@ import org.springframework.context.annotation.Configuration;
 
 @Slf4j
 @Configuration
-public class IpfsConfig {
+public class IpfsApiProvider {
 
     @Value("${ipfs.host}")
     private String host;
