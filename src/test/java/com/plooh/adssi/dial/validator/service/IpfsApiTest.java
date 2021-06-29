@@ -24,7 +24,7 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
 @Slf4j
-public class IpfsServiceTest {
+public class IpfsApiTest {
 
     public static final String CONTENT_HELLO_WORLD = "Hello World!";
 
@@ -35,7 +35,7 @@ public class IpfsServiceTest {
     public IPFS.Pin pin;
 
     @InjectMocks
-    private IpfsService uut;
+    private IpfsApi uut;
 
     @BeforeEach
     void setUp() {
