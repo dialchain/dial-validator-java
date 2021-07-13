@@ -1,8 +1,10 @@
 package com.plooh.adssi.dial.validator.service;
 
+import com.plooh.adssi.dial.validator.util.IpfsUtil;
 import io.ipfs.api.IPFS;
 import io.ipfs.api.MerkleNode;
 import io.ipfs.api.NamedStreamable;
+import io.ipfs.api.Options;
 import io.ipfs.multihash.Multihash;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -43,8 +45,8 @@ public class IpfsApi {
     public String addFile(byte[] content, String fileName){
         try {
             NamedStreamable file = new NamedStreamable.ByteArrayWrapper(fileName, content);
-            MerkleNode response = ipfs.add(file).get(0);
-            String hash = response.hash.toBase58();
+            MerkleNode response = ipfs.add(file, Map.of(Options.RAW_LEAVES, "true")).get(0);
+            String hash = IpfsUtil.toBase58(response.hash);
             log.info("Filename: {}, Hash (base 58): {}", response.name.orElse("unknown"), hash);
             return hash;
         } catch (IOException e) {
@@ -60,7 +62,7 @@ public class IpfsApi {
      */
     public byte[] getFileByHash(String hash){
         try {
-            return ipfs.cat(Multihash.fromBase58(hash));
+            return ipfs.cat(IpfsUtil.fromBase58(hash));
         } catch (IOException e) {
             throw new RuntimeException("Error while getting file from the IPFS node", e);
         }
@@ -74,7 +76,7 @@ public class IpfsApi {
      */
     public List<MerkleNode> getFileInfoByHash(String hash) {
         try {
-            return ipfs.ls(Multihash.fromBase58(hash));
+            return ipfs.ls(IpfsUtil.fromBase58(hash));
         } catch (IOException e) {
             throw new RuntimeException("Error while getting info from the IPFS node", e);
         }
@@ -90,8 +92,8 @@ public class IpfsApi {
      */
     public List<String> pinFileByHash(String hash) {
         try {
-            List<Multihash> list = ipfs.pin.add(Multihash.fromBase58(hash));
-            return list.stream().map(multihash -> multihash.toBase58()).collect(Collectors.toList());
+            List<Multihash> list = ipfs.pin.add(IpfsUtil.fromBase58(hash));
+            return list.stream().map(multihash -> IpfsUtil.toBase58(multihash)).collect(Collectors.toList());
         } catch (IOException e) {
             throw new RuntimeException("Error while pining to the IPFS node", e);
         }
@@ -105,8 +107,8 @@ public class IpfsApi {
      */
     public List<String> unpinFileByHash(String hash) {
         try {
-            List<Multihash> list = ipfs.pin.rm(Multihash.fromBase58(hash));
-            return list.stream().map(multihash -> multihash.toBase58()).collect(Collectors.toList());
+            List<Multihash> list = ipfs.pin.rm(IpfsUtil.fromBase58(hash));
+            return list.stream().map(multihash -> IpfsUtil.toBase58(multihash)).collect(Collectors.toList());
         } catch (IOException e) {
             throw new RuntimeException("Error while unpining to the IPFS node", e);
         }
@@ -120,7 +122,7 @@ public class IpfsApi {
     public List<String> listAllFiles() {
         try {
             Map<Multihash, Object> map = ipfs.pin.ls(IPFS.PinType.all);
-            return map.keySet().stream().map(multihash -> multihash.toBase58()).collect(Collectors.toList());
+            return map.keySet().stream().map(multihash -> IpfsUtil.toBase58(multihash)).collect(Collectors.toList());
         } catch (IOException e) {
             throw new RuntimeException("Error while getting files from the IPFS node", e);
         }
